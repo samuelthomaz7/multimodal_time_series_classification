@@ -1,3 +1,5 @@
+import copy
+import numpy as np
 import torch
 import os
 import pickle
@@ -13,11 +15,6 @@ class NNModel(nn.Module):
         super().__init__()
 
         set_seeds(random_state)
-
-        # self.X_train = X_train
-        # self.X_test = X_test
-        # self.y_train = y_train
-        # self.y_test = y_test
         self.device = device
 
         self.train_dataset = train_dataset
@@ -27,7 +24,7 @@ class NNModel(nn.Module):
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
-        self.epochs = 5000
+        self.epochs = 10000
         self.num_classes = self.metadata['class_values']
         self.batch_size = 32
         self.metrics = {}
@@ -68,10 +65,10 @@ class NNModel(nn.Module):
 
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer, 
-            mode='min', 
+            mode='max', 
             factor=0.75, 
-            patience= 10, 
-            # patience= int(self.epochs*0.05), 
+            # patience= 10, 
+            patience= int(self.epochs*0.05), 
             verbose=True
         )
 
@@ -79,8 +76,13 @@ class NNModel(nn.Module):
             'train_loss' : [],
             'test_loss' : [],
             'train_accuracy' : [],
-            'test_accuracy' : []
+            'test_accuracy' : [],
+            'epochs': list(range(self.epochs))
         }
+
+        best_val_acc = 0
+        patience_early_stopping = int(self.epochs*0.5)
+        patience_lr = int(self.epochs*0.05)
 
         start_time = time.time()
 
@@ -90,7 +92,7 @@ class NNModel(nn.Module):
             running_loss = 0.0
             correct_predictions = 0
             total_predictions = 0
-
+            
             for batch_idx, (inputs, targets) in enumerate(self.train_dataload):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
 
@@ -133,15 +135,36 @@ class NNModel(nn.Module):
                 valid_loss /= len(self.test_dataload)
                 valid_accuracy = valid_correct / valid_total
             
-            self.scheduler.step(valid_loss)
+            self.scheduler.step(valid_accuracy)
+
+            history['train_loss'].append(epoch_loss)
+            history['test_loss'].append(valid_loss)
+            history['train_accuracy'].append(epoch_accuracy)
+            history['test_accuracy'].append(valid_accuracy)
 
             current_lr = get_lr(self.optimizer)
+            
+            if valid_accuracy >= 0.99999999:
+                break
 
-            print(f'Epoch [{epoch+1}/{self.epochs}]| Loss: {epoch_loss:.4f}| Accuracy: {epoch_accuracy:.4f}| '
-              f'Val Loss: {valid_loss:.4f}| Val Accuracy: {valid_accuracy:.4f} | LR: {current_lr}')
+            if valid_accuracy > best_val_acc:
+                best_val_acc = valid_accuracy
+                best_model_weights = copy.deepcopy(self.state_dict())  # Deep copy here      
+                patience_early_stopping = int(self.epochs*0.5)  # Reset patience counter
+                patience_lr = int(self.epochs*0.05) 
+            else:
+                patience_early_stopping = patience_early_stopping - 1
+                patience_lr = patience_lr - 1
 
-            # if epoch % 1 == 0:
-            #     print(f"Epoch: {epoch:} |Train loss: {epoch_loss:.5f} | Train accuracy: {100*epoch_accuracy:.2f}%")
+                if patience_lr == 0:
+                    patience_lr = int(self.epochs*0.05)
+
+                if patience_early_stopping == 0:
+                    break
+
+            print(f'{self.random_state} - Epoch [{epoch+1}/{self.epochs}]| Loss: {epoch_loss:.4f}| Accuracy: {epoch_accuracy:.4f}| '
+              f'Val Loss: {valid_loss:.4f}| Val Accuracy: {valid_accuracy:.4f} | LR: {current_lr} | Patience left ES: {patience_early_stopping} | Patience left LR: {patience_lr}')
+
 
 
 
