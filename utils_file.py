@@ -103,3 +103,7 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
             #     pass
             # else:
             #     model.training_process()
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']

@@ -4,7 +4,7 @@ import pickle
 from torch import nn
 from torch.utils.data import DataLoader
 import time
-from utils_file import set_seeds
+from utils_file import get_lr, set_seeds
 
 
 class NNModel(nn.Module):
@@ -32,7 +32,7 @@ class NNModel(nn.Module):
         self.batch_size = 32
         self.metrics = {}
 
-
+        
         self.train_dataload = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_dataload = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
@@ -62,8 +62,17 @@ class NNModel(nn.Module):
     def fit(self):
 
         self.optimizer = torch.optim.Adam(
-            lr = 0.001,
+            lr = 0.0001,
             params=self.parameters()
+        )
+
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, 
+            mode='min', 
+            factor=0.75, 
+            patience= 10, 
+            # patience= int(self.epochs*0.05), 
+            verbose=True
         )
 
         history = {
@@ -107,7 +116,7 @@ class NNModel(nn.Module):
             epoch_accuracy = correct_predictions / total_predictions
 
             self.eval()
-            with torch.no_grad():
+            with torch.inference_mode():
                 valid_loss = 0.0
                 valid_correct = 0
                 valid_total = 0
@@ -123,9 +132,13 @@ class NNModel(nn.Module):
 
                 valid_loss /= len(self.test_dataload)
                 valid_accuracy = valid_correct / valid_total
+            
+            self.scheduler.step(valid_loss)
+
+            current_lr = get_lr(self.optimizer)
 
             print(f'Epoch [{epoch+1}/{self.epochs}]| Loss: {epoch_loss:.4f}| Accuracy: {epoch_accuracy:.4f}| '
-              f'Val Loss: {valid_loss:.4f}| Val Accuracy: {valid_accuracy:.4f}')
+              f'Val Loss: {valid_loss:.4f}| Val Accuracy: {valid_accuracy:.4f} | LR: {current_lr}')
 
             # if epoch % 1 == 0:
             #     print(f"Epoch: {epoch:} |Train loss: {epoch_loss:.5f} | Train accuracy: {100*epoch_accuracy:.2f}%")
