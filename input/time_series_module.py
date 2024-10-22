@@ -15,4 +15,4 @@ class TimeSeriesDataset(Dataset):
     
     def __getitem__(self, idx):
         # Return a tuple of (input_data, label)
-        return torch.tensor(self.data[idx], dtype=torch.float32), torch.tensor(self.labels[idx], dtype=torch.long)
+        return torch.tensor(self.data[idx], dtype=torch.float32).to(device=self.device), torch.tensor(self.labels[idx], dtype=torch.long).to(device=self.device)

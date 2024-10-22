@@ -76,26 +76,28 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
             X_train, X_test, y_train, y_test = train_test_object.transform()
             X_train, X_test, y_train, y_test = torch.from_numpy(X_train).to(device), torch.from_numpy(X_test).to(device), torch.from_numpy(y_train).to(device), torch.from_numpy(y_test).to(device)
 
-            train_dataloader = TimeSeriesDataset(
+            train_dataset = TimeSeriesDataset(
                 data=X_train,
                 labels=y_train,
                 metadata=metadata
             )
 
-            test_dataloader = TimeSeriesDataset(
+            test_dataset = TimeSeriesDataset(
                 data=X_test,
                 labels=y_test,
                 metadata=metadata
             )
 
-            # model = used_model(
-            #     X_train=X_train,
-            #     X_test = X_test,
-            #     y_train = y_train,
-            #     y_test = y_test,
-            #     metadata = metadata,
-            #     random_state = random_state
-            # )
+            model = used_model(
+                train_dataloader = train_dataset,
+                test_dataloader = test_dataset,
+                metadata = metadata,
+                random_state = random_state
+            ).to(device)
+
+            model.fit()
+
+            print('asdasd')
 
             # if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
             #     pass
