@@ -9,6 +9,7 @@ import random
 from tqdm import tqdm
 
 from input.reading_datasets import read_dataset_from_file
+from input.time_series_module import TimeSeriesDataset
 from preprocessing.get_dummies_labels import GetDummiesLabels
 from preprocessing.train_test_split_module import TrainTestSplit
 
@@ -50,7 +51,7 @@ def get_all_results():
     return complete_data
 
 
-def training_nn_for_seeds(used_model, datasets = [], seeds = []):
+def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []):
     for dataset in tqdm(datasets):
         for random_state in tqdm(seeds):
             print(f'{dataset} - {random_state}')
@@ -73,17 +74,30 @@ def training_nn_for_seeds(used_model, datasets = [], seeds = []):
             )
 
             X_train, X_test, y_train, y_test = train_test_object.transform()
+            X_train, X_test, y_train, y_test = torch.from_numpy(X_train).to(device), torch.from_numpy(X_test).to(device), torch.from_numpy(y_train).to(device), torch.from_numpy(y_test).to(device)
 
-            model = used_model(
-                X_train=X_train,
-                X_test = X_test,
-                y_train = y_train,
-                y_test = y_test,
-                metadata = metadata,
-                random_state = random_state
+            train_dataloader = TimeSeriesDataset(
+                data=X_train,
+                labels=y_train,
+                metadata=metadata
             )
 
-            if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
-                pass
-            else:
-                model.training_process()
+            test_dataloader = TimeSeriesDataset(
+                data=X_test,
+                labels=y_test,
+                metadata=metadata
+            )
+
+            # model = used_model(
+            #     X_train=X_train,
+            #     X_test = X_test,
+            #     y_train = y_train,
+            #     y_test = y_test,
+            #     metadata = metadata,
+            #     random_state = random_state
+            # )
+
+            # if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
+            #     pass
+            # else:
+            #     model.training_process()

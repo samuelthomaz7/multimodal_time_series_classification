@@ -8,15 +8,17 @@ from utils_file import set_seeds
 
 class NNModel(nn.Module):
 
-    def __init__(self, X_train, X_test, y_train, y_test, metadata, model_name, random_state = 42) -> None:
+    def __init__(self, train_dataloader, test_dataloader, metadata, model_name, random_state = 42) -> None:
         super().__init__()
 
         set_seeds(random_state)
 
-        self.X_train = X_train
-        self.X_test = X_test
-        self.y_train = y_train
-        self.y_test = y_test
+        # self.X_train = X_train
+        # self.X_test = X_test
+        # self.y_train = y_train
+        # self.y_test = y_test
+        self.train_dataloader = train_dataloader
+        self.test_dataloader = test_dataloader
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
