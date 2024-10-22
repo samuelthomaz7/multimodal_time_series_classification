@@ -50,9 +50,6 @@ class NNModel(nn.Module):
         else:
             self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
-
-
-    
     def forward(self, x):
         pass
 
@@ -72,7 +69,7 @@ class NNModel(nn.Module):
             verbose=True
         )
 
-        history = {
+        self.history = {
             'train_loss' : [],
             'test_loss' : [],
             'train_accuracy' : [],
@@ -137,10 +134,10 @@ class NNModel(nn.Module):
             
             self.scheduler.step(valid_accuracy)
 
-            history['train_loss'].append(epoch_loss)
-            history['test_loss'].append(valid_loss)
-            history['train_accuracy'].append(epoch_accuracy)
-            history['test_accuracy'].append(valid_accuracy)
+            self.history['train_loss'].append(epoch_loss)
+            self.history['test_loss'].append(valid_loss)
+            self.history['train_accuracy'].append(epoch_accuracy)
+            self.history['test_accuracy'].append(valid_accuracy)
 
             current_lr = get_lr(self.optimizer)
             
@@ -149,8 +146,11 @@ class NNModel(nn.Module):
 
             if valid_accuracy > best_val_acc:
                 best_val_acc = valid_accuracy
-                best_model_weights = copy.deepcopy(self.state_dict())  # Deep copy here      
-                patience_early_stopping = int(self.epochs*0.5)  # Reset patience counter
+                # best_model_weights = copy.deepcopy(self.state_dict()) 
+
+                torch.save(self.state_dict(), './model_checkpoints/' + self.model_folder + '/best_model.pth')
+
+                patience_early_stopping = int(self.epochs*0.5)  
                 patience_lr = int(self.epochs*0.05) 
             else:
                 patience_early_stopping = patience_early_stopping - 1
@@ -170,6 +170,12 @@ class NNModel(nn.Module):
 
         end_time = time.time()
         self.metrics = {
-            'traning_time': end_time - start_time
+            'traning_time': end_time - start_time,
+            'history': self.history
         }
+
+        with open('./model_checkpoints/' + self.model_folder + '/metrics.pkl', 'wb') as f:  # open a text file
+            pickle.dump(self.metrics, f) # serialize the list 
+
+
 

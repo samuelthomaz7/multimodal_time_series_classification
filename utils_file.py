@@ -95,14 +95,10 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                 random_state = random_state
             ).to(device)
 
-            model.fit()
-
-            print('asdasd')
-
-            # if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
-            #     pass
-            # else:
-            #     model.training_process()
+            if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
+                pass
+            else:
+                model.fit()
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
