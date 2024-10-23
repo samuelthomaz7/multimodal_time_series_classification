@@ -103,3 +103,50 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group['lr']
+    
+
+def get_all_results(grouped = False):
+
+
+    all_dirs = os.listdir('./model_checkpoints')
+
+    info = []
+    for directory in all_dirs:
+        execution_info = {
+            'directory': directory,
+            'model_name': directory.split('_')[0],
+            'dataset': directory.split('_')[1],
+            'seed': int(directory.split('_')[2])
+        }
+
+
+        
+
+        if 'metrics.pkl' in os.listdir('./model_checkpoints/' + directory):
+            with open('./model_checkpoints/' + directory + '/metrics.pkl', 'rb') as f:
+                history = pickle.load(f) 
+
+            execution_info['max_train_accuracy'] = max(history['history']['train_accuracy'])
+            execution_info['max_test_accuracy'] = max(history['history']['test_accuracy'])
+            execution_info['epochs'] = len(history['history']['epochs'])
+            execution_info['execution_time'] = (history['traning_time'])
+            execution_info['time_per_epoch'] = history['traning_time']/execution_info['epochs']
+
+
+        info.append(execution_info)
+        complete_data = pd.DataFrame(info).sort_values(by = ['dataset', 'model_name','seed']).reset_index(drop = True)
+    
+    if grouped:
+
+        agg_data =  complete_data.groupby(['dataset', 'model_name']).agg({
+            'max_train_accuracy': 'mean',
+            'max_test_accuracy': 'mean',
+            'epochs': 'mean',
+            'execution_time': 'mean',
+            'time_per_epoch': 'mean'
+        }).reset_index()
+
+        return agg_data
+
+    else:
+        return complete_data

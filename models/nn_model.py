@@ -74,7 +74,7 @@ class NNModel(nn.Module):
             'test_loss' : [],
             'train_accuracy' : [],
             'test_accuracy' : [],
-            'epochs': list(range(self.epochs))
+            'epochs': []
         }
 
         best_val_acc = 0
@@ -138,6 +138,7 @@ class NNModel(nn.Module):
             self.history['test_loss'].append(valid_loss)
             self.history['train_accuracy'].append(epoch_accuracy)
             self.history['test_accuracy'].append(valid_accuracy)
+            self.history['epochs'].append(epoch)
 
             current_lr = get_lr(self.optimizer)
             
