@@ -24,7 +24,7 @@ class NNModel(nn.Module):
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
-        self.epochs = 10000
+        self.epochs = 5000
         self.num_classes = self.metadata['class_values']
         self.batch_size = 32
         self.metrics = {}
@@ -56,7 +56,7 @@ class NNModel(nn.Module):
     def fit(self):
 
         self.optimizer = torch.optim.Adam(
-            lr = 0.0001,
+            lr = 0.001,
             params=self.parameters()
         )
 
