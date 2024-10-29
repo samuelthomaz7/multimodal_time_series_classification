@@ -7,20 +7,21 @@ from torch import nn
 from torch.utils.data import DataLoader
 import time
 from utils_file import get_lr, set_seeds
+from modality_info import modalities
 
 
 class NNModel(nn.Module):
 
-    def __init__(self, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda') -> None:
+    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda', is_multimodal = False) -> None:
         super().__init__()
 
         set_seeds(random_state)
         self.device = device
-
+        self.dataset_name = dataset_name
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
 
-        self.is_multimodal = False
+        self.is_multimodal = is_multimodal
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
@@ -33,7 +34,11 @@ class NNModel(nn.Module):
         self.train_dataload = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_dataload = DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
-        self.input_shape = self.train_dataload.dataset.data.shape
+        if self.is_multimodal:
+            self.input_shape = [i.shape for i in self.transform_multimodal(self.train_dataload.dataset.data)]
+        else:
+            self.input_shape = self.train_dataload.dataset.data.shape
+
         self.classes_shape = self.train_dataload.dataset.labels.shape
 
         self.model_folder = self.model_name + '_' + self.metadata['problemname'].replace(' ', '_') + '_' + str(self.random_state)
@@ -52,6 +57,13 @@ class NNModel(nn.Module):
 
     def forward(self, x):
         pass
+
+    def transform_multimodal(self, x):
+        modalities_dataset = modalities[self.dataset_name]
+        mod_stack = list(modalities_dataset.values())
+        x_modalities = [x[:, i, :] for i in mod_stack]
+
+        return x_modalities
 
     def fit(self):
 

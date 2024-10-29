@@ -7,6 +7,7 @@ import torch
 import random
 
 from tqdm import tqdm
+from modality_info import modalities
 
 from input.reading_datasets import read_dataset_from_file
 from input.time_series_module import TimeSeriesDataset
@@ -51,7 +52,7 @@ def get_all_results():
     return complete_data
 
 
-def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []):
+def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = [], is_multimodal = False):
     for dataset in tqdm(datasets):
         for random_state in tqdm(seeds):
             print(f'{dataset} - {random_state}')
@@ -76,6 +77,13 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
             X_train, X_test, y_train, y_test = train_test_object.transform()
             X_train, X_test, y_train, y_test = torch.from_numpy(X_train).to(device), torch.from_numpy(X_test).to(device), torch.from_numpy(y_train).to(device), torch.from_numpy(y_test).to(device)
 
+            # if is_multimodal:
+
+            #     modalities_dataset = modalities[dataset]
+            #     mod_stack = list(modalities_dataset.values())
+            #     X_train = [X_train[:, i, :] for i in mod_stack]
+            #     X_test = [X_test[:, i, :] for i in mod_stack]
+
             train_dataset = TimeSeriesDataset(
                 data=X_train,
                 labels=y_train,
@@ -89,10 +97,11 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
             )
 
             model = used_model(
-                train_dataloader = train_dataset,
-                test_dataloader = test_dataset,
+                train_dataset = train_dataset,
+                test_dataset = test_dataset,
                 metadata = metadata,
-                random_state = random_state
+                random_state = random_state,
+                dataset_name = dataset
             ).to(device)
 
             if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
