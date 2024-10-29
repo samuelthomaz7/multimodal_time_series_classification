@@ -20,7 +20,7 @@ class NNModel(nn.Module):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
 
-
+        self.is_multimodal = False
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
