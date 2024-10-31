@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 
 class GlobalAveragePooling(nn.Module):

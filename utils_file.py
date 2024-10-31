@@ -101,7 +101,8 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                 test_dataset = test_dataset,
                 metadata = metadata,
                 random_state = random_state,
-                dataset_name = dataset
+                dataset_name = dataset,
+                device = device
             ).to(device)
 
             if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
