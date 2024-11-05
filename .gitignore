@@ -117,7 +117,7 @@ __pypackages__/
 downloaded_datasets
 model_checkpoints
 output.txt
-nohup.out
+*.out
 out_inc.txt
 
 # Celery stuff

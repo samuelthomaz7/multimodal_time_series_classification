@@ -52,7 +52,7 @@ def get_all_results():
     return complete_data
 
 
-def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = [], is_multimodal = False):
+def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = [], is_multimodal = False, is_debbug = False):
     for dataset in tqdm(datasets):
         for random_state in tqdm(seeds):
             print(f'{dataset} - {random_state}')
@@ -105,7 +105,7 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                 device = device
             ).to(device)
 
-            if len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0 :
+            if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False) :
                 pass
             else:
                 model.fit()
