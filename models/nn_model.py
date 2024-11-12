@@ -12,7 +12,7 @@ from modality_info import modalities
 
 class NNModel(nn.Module):
 
-    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda', is_multimodal = False, is_ensemble = False) -> None:
+    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda', is_multimodal = False, is_ensemble = False, model_num = None) -> None:
         super().__init__()
 
         set_seeds(random_state)
@@ -20,6 +20,7 @@ class NNModel(nn.Module):
         self.dataset_name = dataset_name
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
+        self.model_num = model_num
 
         self.is_multimodal = is_multimodal
         self.metadata = metadata
@@ -42,13 +43,25 @@ class NNModel(nn.Module):
 
         self.classes_shape = self.train_dataload.dataset.labels.shape
 
-        self.model_folder = self.model_name + '_' + self.metadata['problemname'].replace(' ', '_') + '_' + str(self.random_state)
-
         if 'model_checkpoints' not in os.listdir('.'):
             os.mkdir('./model_checkpoints')
         
-        if self.model_folder not in os.listdir('./model_checkpoints'):
-            os.mkdir('./model_checkpoints/' + self.model_folder)
+        if not self.is_ensemble:
+            self.model_folder = self.model_name + '_' + self.metadata['problemname'].replace(' ', '_') + '_' + str(self.random_state)
+            
+            if self.model_folder not in os.listdir('./model_checkpoints'):
+                os.mkdir('./model_checkpoints/' + self.model_folder)
+        else:
+            self.model_folder_general = self.model_name + '_' + self.metadata['problemname'].replace(' ', '_') + '_' + str(self.random_state)
+            
+            if self.model_folder_general not in os.listdir('./model_checkpoints'):
+                os.mkdir('./model_checkpoints/' + self.model_folder_general)
+
+            self.model_folder = self.model_folder_general + f'/model{self.model_num}'
+
+            if self.model_folder.split('/')[1] not in os.listdir('./model_checkpoints/' +  self.model_folder_general):
+                os.mkdir('./model_checkpoints/' + self.model_folder)
+        
 
 
         if len(self.metadata['class_values']) > 2:
@@ -118,7 +131,10 @@ class NNModel(nn.Module):
 
                 # Forward pass
                 outputs = self.forward(inputs)
-                loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+                if not self.is_ensemble:
+                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+                else:
+                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
 
                 # Backward pass and optimization
                 loss.backward()
@@ -142,7 +158,13 @@ class NNModel(nn.Module):
                 for inputs, targets in self.test_dataload:
                     inputs, targets = inputs.to(self.device), targets.to(self.device)
                     outputs = self(inputs)
+                    
+                if not self.is_ensemble:
                     loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+                else:
+                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
+
+                    # loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
 
                     valid_loss += loss.item()
                     _, predicted = torch.max(outputs, 1)

@@ -52,7 +52,7 @@ def get_all_results():
     return complete_data
 
 
-def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = [], is_multimodal = False, is_debbug = False):
+def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = [], is_multimodal = False, is_debbug = False, num_ensembles = None):
     for dataset in tqdm(datasets):
         for random_state in tqdm(seeds):
             print(f'{dataset} - {random_state}')
@@ -77,12 +77,6 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
             X_train, X_test, y_train, y_test = train_test_object.transform()
             X_train, X_test, y_train, y_test = torch.from_numpy(X_train).to(device), torch.from_numpy(X_test).to(device), torch.from_numpy(y_train).to(device), torch.from_numpy(y_test).to(device)
 
-            # if is_multimodal:
-
-            #     modalities_dataset = modalities[dataset]
-            #     mod_stack = list(modalities_dataset.values())
-            #     X_train = [X_train[:, i, :] for i in mod_stack]
-            #     X_test = [X_test[:, i, :] for i in mod_stack]
 
             train_dataset = TimeSeriesDataset(
                 data=X_train,
@@ -96,19 +90,41 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                 metadata=metadata
             )
 
-            model = used_model(
-                train_dataset = train_dataset,
-                test_dataset = test_dataset,
-                metadata = metadata,
-                random_state = random_state,
-                dataset_name = dataset,
-                device = device
-            ).to(device)
+            if num_ensembles == None:
 
-            if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False) :
-                pass
+                model = used_model(
+                    train_dataset = train_dataset,
+                    test_dataset = test_dataset,
+                    metadata = metadata,
+                    random_state = random_state,
+                    dataset_name = dataset,
+                    device = device
+                ).to(device)
+
+                if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False) :
+                    pass
+                else:
+                    model.fit()
+            
             else:
-                model.fit()
+                
+                for model_num in range(1, num_ensembles+1):
+
+                    model = used_model(
+                        train_dataset = train_dataset,
+                        test_dataset = test_dataset,
+                        metadata = metadata,
+                        random_state = random_state,
+                        dataset_name = dataset,
+                        device = device,
+                        model_num = model_num
+                    ).to(device)
+
+                    if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False) :
+                        pass
+                    else:
+                        model.fit()
+
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
