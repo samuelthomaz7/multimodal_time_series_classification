@@ -99,6 +99,6 @@ class InceptionTime(NNModel):
         x = self.inception_block(x)
         x = torch.mean(x, dim=-1)
         x = self.linear(x)
-        x = nn.Sigmoid()(x) if self.classes_shape[1] == 2 else nn.LogSoftmax()(x)
+        # x = nn.Sigmoid()(x) if self.classes_shape[1] == 2 else nn.LogSoftmax()(x)
         
         return x

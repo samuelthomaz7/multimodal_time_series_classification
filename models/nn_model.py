@@ -66,7 +66,8 @@ class NNModel(nn.Module):
 
         if len(self.metadata['class_values']) > 2:
             if self.is_ensemble:
-                self.loss_fn = torch.nn.NLLLoss()
+                # self.loss_fn = torch.nn.NLLLoss()
+                self.loss_fn = torch.nn.CrossEntropyLoss()
             else:
                 self.loss_fn = torch.nn.CrossEntropyLoss()
             
@@ -130,11 +131,15 @@ class NNModel(nn.Module):
                 self.optimizer.zero_grad()
 
                 # Forward pass
+
                 outputs = self.forward(inputs)
-                if not self.is_ensemble:
-                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
-                else:
-                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
+                
+                loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+
+                # if not self.is_ensemble:
+                #     loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+                # else:
+                #     loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
 
                 # Backward pass and optimization
                 loss.backward()
@@ -159,12 +164,12 @@ class NNModel(nn.Module):
                     inputs, targets = inputs.to(self.device), targets.to(self.device)
                     outputs = self(inputs)
                     
-                if not self.is_ensemble:
-                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
-                else:
-                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
+                # if not self.is_ensemble:
+                #     loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+                # else:
+                #     loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
 
-                    # loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
+                    loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32))
 
                     valid_loss += loss.item()
                     _, predicted = torch.max(outputs, 1)
