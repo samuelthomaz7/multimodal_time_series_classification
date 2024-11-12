@@ -12,7 +12,7 @@ from modality_info import modalities
 
 class NNModel(nn.Module):
 
-    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda', is_multimodal = False) -> None:
+    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda', is_multimodal = False, is_ensemble = False) -> None:
         super().__init__()
 
         set_seeds(random_state)
@@ -29,6 +29,7 @@ class NNModel(nn.Module):
         self.num_classes = self.metadata['class_values']
         self.batch_size = 32
         self.metrics = {}
+        self.is_ensemble = is_ensemble
 
         
         self.train_dataload = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, shuffle=True)
@@ -51,9 +52,16 @@ class NNModel(nn.Module):
 
 
         if len(self.metadata['class_values']) > 2:
-            self.loss_fn = torch.nn.CrossEntropyLoss()
+            if self.is_ensemble:
+                self.loss_fn = torch.nn.NLLLoss()
+            else:
+                self.loss_fn = torch.nn.CrossEntropyLoss()
+            
         else:
-            self.loss_fn = torch.nn.BCEWithLogitsLoss()
+            if self.is_ensemble:
+                self.loss_fn = torch.nn.BCELoss()
+            else:
+                self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
     def forward(self, x):
         pass

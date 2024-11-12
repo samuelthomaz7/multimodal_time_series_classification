@@ -82,8 +82,8 @@ class InceptionBlock(nn.Module):
 
 class InceptionTime(NNModel):
 
-    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name = 'InceptionTime', random_state=42, device='cuda', is_multimodal=False) -> None:
-        super().__init__(dataset_name, train_dataset, test_dataset, metadata, model_name, random_state, device, is_multimodal)
+    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name = 'InceptionTime', random_state=42, device='cuda', is_multimodal=False, is_ensemble = True) -> None:
+        super().__init__(dataset_name, train_dataset, test_dataset, metadata, model_name, random_state, device, is_multimodal, is_ensemble)
 
 
         self.inception_block = InceptionBlock(
@@ -98,4 +98,7 @@ class InceptionTime(NNModel):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.inception_block(x)
         x = torch.mean(x, dim=-1)
-        return self.linear(x)
+        x = self.linear(x)
+        x = nn.Sigmoid()(x) if self.classes_shape[1] == 2 else nn.Softmax()(x)
+        
+        return x
