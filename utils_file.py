@@ -4,7 +4,9 @@ import numpy as np
 import os
 import pandas as pd
 import torch 
+from torch import nn
 import random
+from sklearn.metrics import accuracy_score
 
 from tqdm import tqdm
 from modality_info import modalities
@@ -54,6 +56,7 @@ def get_all_results():
 
 def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = [], is_multimodal = False, is_debbug = False, num_ensembles = None):
     for dataset in tqdm(datasets):
+        model_count = 1
         for random_state in tqdm(seeds):
             print(f'{dataset} - {random_state}')
             used_dataset = read_dataset_from_file(dataset_name = dataset)
@@ -107,6 +110,8 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                     model.fit()
             
             else:
+                activation_function = nn.Softmax(dim = 1) if train_dataset.labels.shape[1] != 2 else nn.Sigmoid(dim = 1)
+                best_models = []
                 
                 for model_num in range(1, num_ensembles+1):
 
@@ -117,13 +122,63 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                         random_state = random_state,
                         dataset_name = dataset,
                         device = device,
-                        model_num = model_num
+                        model_num = model_count
                     ).to(device)
 
                     if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False) :
                         pass
                     else:
                         model.fit()
+                    
+                    model_count += 1
+
+                    load_model = torch.load(f = './model_checkpoints/' + model.model_folder + '/best_model.pth') 
+                    model.load_state_dict(load_model)
+
+                    best_models.append(model)
+
+                predictions = []
+                train_predictions = []
+                
+                for model in best_models:
+
+                    with torch.inference_mode():   
+                        logits = model(test_dataset.data.type(torch.float32))
+                        predictions.append(activation_function(logits))
+
+                        train_logits = model(train_dataset.data.type(torch.float32))
+                        train_predictions.append(activation_function(train_logits))
+                    
+                    stacked_tensors = torch.stack(predictions)
+                    ensembled_predictions = torch.mean(stacked_tensors, dim = 0)
+
+                    stacked_tensors_train = torch.stack(train_predictions)
+                    ensembled_predictions_train = torch.mean(stacked_tensors_train, dim = 0)
+                
+                accuracy = accuracy_score(y_true = torch.argmax(test_dataset.labels, dim = 1).cpu(), y_pred = torch.argmax(ensembled_predictions, dim = 1).cpu())
+                train_accuracy = accuracy_score(y_true = torch.argmax(train_dataset.labels, dim = 1).cpu(), y_pred = torch.argmax(ensembled_predictions_train, dim = 1).cpu())
+
+                
+                history = {
+                    'train_loss' : [0], 
+                    'test_loss': [0], 
+                    'train_accuracy': [train_accuracy], 
+                    'test_accuracy': [accuracy], 
+                    'epochs': [9999]
+
+                }
+
+                metrics = {
+                    'history': history,
+                    'traning_time': 99999
+                }
+
+                with open('./model_checkpoints/' + model.model_folder.split('/')[0] + '/metrics.pkl', 'wb') as f:  # open a text file
+                    pickle.dump(metrics, f)
+
+                    
+                print('asdadasdd')
+                    
 
 
 def get_lr(optimizer):

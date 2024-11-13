@@ -26,7 +26,7 @@ class NNModel(nn.Module):
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
-        self.epochs = 5000
+        self.epochs = 10
         self.num_classes = self.metadata['class_values']
         self.batch_size = 32
         self.metrics = {}
