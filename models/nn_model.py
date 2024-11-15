@@ -15,7 +15,11 @@ class NNModel(nn.Module):
     def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name, random_state = 42, device = 'cuda', is_multimodal = False, is_ensemble = False, model_num = None) -> None:
         super().__init__()
 
-        set_seeds(random_state)
+        if is_ensemble:
+            set_seeds(model_num)
+        else:
+            set_seeds(random_state)
+
         self.device = device
         self.dataset_name = dataset_name
         self.train_dataset = train_dataset
@@ -26,7 +30,7 @@ class NNModel(nn.Module):
         self.metadata = metadata
         self.random_state = random_state
         self.model_name = model_name
-        self.epochs = 10
+        self.epochs = 5000
         self.num_classes = self.metadata['class_values']
         self.batch_size = 32
         self.metrics = {}
@@ -73,9 +77,11 @@ class NNModel(nn.Module):
             
         else:
             if self.is_ensemble:
-                self.loss_fn = torch.nn.BCELoss()
+                # self.loss_fn = torch.nn.BCELoss()
+                self.loss_fn = torch.nn.BCEWithLogitsLoss()
             else:
                 self.loss_fn = torch.nn.BCEWithLogitsLoss()
+                
 
     def forward(self, x):
         pass
