@@ -107,47 +107,50 @@ class InceptionTime(nn.Module):
         return x
     
 
-class InceptionTimeEnsembleIntermediate(NNModel):
+class InceptionTimeIntermediate(NNModel):
 
-    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name = 'InceptionTimeEnsembleIntermediate', random_state=42, device='cuda', is_multimodal=True) -> None:
-        super().__init__(dataset_name, train_dataset, test_dataset, metadata, model_name, random_state, device, is_multimodal)
+    # def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name = 'InceptionTimeEnsembleIntermediate', random_state=42, device='cuda', is_multimodal=True) -> None:
+    #     super().__init__(dataset_name, train_dataset, test_dataset, metadata, model_name, random_state, device, is_multimodal)
+        
+    def __init__(self, dataset_name, train_dataset, test_dataset, metadata, model_name = 'InceptionTimeIntermediate', random_state=42, device='cuda', is_multimodal=True, is_ensemble = True, model_num = None) -> None:
+        super().__init__(dataset_name, train_dataset, test_dataset, metadata, model_name, random_state, device, is_multimodal, is_ensemble, model_num)
         
         self.num_models_ensemble = 5
 
         self.modalities = nn.ModuleDict()
         self.num_modalities = len(self.input_shape)
-        self.last_linear_layer = nn.ModuleList()
-        self.final_inception_modules = nn.ModuleList()
+        # self.last_linear_layer = nn.ModuleList()
+        # self.final_inception_modules = nn.ModuleList()
 
         # self.linear = nn.Linear(32 * 4, 1 if num_classes == 2 else num_classes)
-        for model_num in range(self.num_models_ensemble):
+        # for model_num in range(self.num_models_ensemble):
         
             
 
-            for i, input_shape in enumerate(self.input_shape):
-                
-                if f"modality_{i}" not in self.modalities.keys():
-                    self.modalities[f"modality_{i}"] = nn.ModuleList()
-                else:
-                    pass
+        for i, input_shape in enumerate(self.input_shape):
+            
+            # if f"modality_{i}" not in self.modalities.keys():
+            #     self.modalities[f"modality_{i}"] = nn.ModuleList()
+            # else:
+            #     pass
 
-                self.modalities[f"modality_{i}"].append(InceptionTime(
-                    in_channels = input_shape[1],
-                    num_classes = self.classes_shape[1],
-                    depth = 4,
-                    use_gap=False
-
-                ))
-
-            self.final_inception_modules.append(InceptionTime(
-                in_channels = 128*self.num_modalities,
+            self.modalities[f"modality_{i}"] = InceptionTime(
+                in_channels = input_shape[1],
                 num_classes = self.classes_shape[1],
                 depth = 4,
-                use_gap=True
+                use_gap=False
 
-            ))
-            
-            self.last_linear_layer.append(nn.Linear(128, 1 if self.classes_shape[1] == 2 else self.classes_shape[1]))
+            )
+
+        self.final_inception_modules = InceptionTime(
+            in_channels = 128*self.num_modalities,
+            num_classes = self.classes_shape[1],
+            depth = 4,
+            use_gap=True
+
+        )
+        
+        self.last_linear_layer = nn.Linear(128, 1 if self.classes_shape[1] == 2 else self.classes_shape[1])
             
 
 
@@ -158,25 +161,28 @@ class InceptionTimeEnsembleIntermediate(NNModel):
 
         x_modalities = self.transform_multimodal(x)
 
-        output_list = []
-        for model_num in range(self.num_models_ensemble):
+        # output_list = []
+        # for model_num in range(self.num_models_ensemble):
         
-            modality_outputs = []
-            
-            for i, input_shape in enumerate(self.input_shape): 
-                x = self.modalities[f"modality_{i}"][model_num](x_modalities[i])
-                modality_outputs.append(x)
+        modality_outputs = []
+        
+        for i, input_shape in enumerate(self.input_shape): 
+            # x = self.modalities[f"modality_{i}"][model_num](x_modalities[i])
+            x = self.modalities[f"modality_{i}"](x_modalities[i])
+            modality_outputs.append(x)
 
-            
-            out = torch.cat(modality_outputs, dim = 1)
-            out = self.final_inception_modules[model_num](out)
-            
-            out = self.last_linear_layer[model_num](out)
+        
+        out = torch.cat(modality_outputs, dim = 1)
+        # out = self.final_inception_modules[model_num](out)
+        out = self.final_inception_modules(out)
+        
+        # out = self.last_linear_layer[model_num](out)
+        out = self.last_linear_layer(out)
 
-            output_list.append(out)
+        # output_list.append(out)
                 
 
-        return torch.mean(torch.stack(output_list), dim = 0)
+        return out
 
 
 

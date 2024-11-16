@@ -120,10 +120,10 @@ class InceptionTimeLate(NNModel):
 
         for i, input_shape in enumerate(self.input_shape):
             
-            if f"modality_{i}" not in self.modalities.keys():
-                self.modalities[f"modality_{i}"] = nn.ModuleList()
-            else:
-                pass
+            # if f"modality_{i}" not in self.modalities.keys():
+            #     self.modalities[f"modality_{i}"] = nn.ModuleList()
+            # else:
+            #     pass
 
             self.modalities[f"modality_{i}"] = InceptionTime(
                 in_channels = input_shape[1],
@@ -132,7 +132,7 @@ class InceptionTimeLate(NNModel):
             )
             
             # self.last_linear_layer.append(nn.Linear(128*self.num_modalities, 1 if self.classes_shape[1] == 2 else self.classes_shape[1]))
-            self.last_linear_layer = nn.Linear(128*self.num_modalities, 1 if self.classes_shape[1] == 2 else self.classes_shape[1])
+        self.last_linear_layer = nn.Linear(128*self.num_modalities, 1 if self.classes_shape[1] == 2 else self.classes_shape[1])
 
             
 
