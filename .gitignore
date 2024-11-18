@@ -119,6 +119,7 @@ model_checkpoints
 output.txt
 *.out
 out_inc.txt
+*.png
 
 # Celery stuff
 celerybeat-schedule
