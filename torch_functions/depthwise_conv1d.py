@@ -11,7 +11,7 @@ class DepthwiseSeparableConvolution1d(nn.Module):
         super().__init__()
         self.depthwise = nn.Conv1d(in_channels=in_channels, out_channels=in_channels,
                                    kernel_size=kernel_size, padding='same', bias=False,
-                                   dilation=dilation, stride=stride)
+                                   dilation=dilation, stride=stride, groups=in_channels)
         self.pointwise = nn.Conv1d(in_channels=in_channels, out_channels=out_channels,
                                    kernel_size=1, padding='same', bias=False,
                                    dilation=dilation, stride=stride)
