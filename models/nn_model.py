@@ -117,7 +117,7 @@ class NNModel(nn.Module):
             'epochs': []
         }
 
-        best_val_acc = 0
+        best_val_acc = -1
         patience_early_stopping = int(self.epochs*0.5)
         patience_lr = int(self.epochs*0.05)
 
