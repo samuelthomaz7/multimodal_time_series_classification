@@ -104,10 +104,11 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
                     device = device
                 ).to(device)
 
-                if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False) :
+                if (len(os.listdir('./model_checkpoints/' + model.model_folder)) != 0) and (is_debbug == False):
                     pass
                 else:
                     model.fit()
+
             
             else:
                 activation_function = nn.Softmax(dim = 1) if train_dataset.labels.shape[1] != 2 else nn.Sigmoid(dim = 1)
@@ -137,47 +138,76 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
 
                     best_models.append(model)
 
-                predictions = []
-                train_predictions = []
-                
-                for model in best_models:
 
-                    with torch.inference_mode():   
-                        logits = model(test_dataset.data.type(torch.float32))
-                        predictions.append(activation_function(logits))
 
-                        train_logits = model(train_dataset.data.type(torch.float32))
-                        train_predictions.append(activation_function(train_logits))
+                if ('metrics.pkl' in os.listdir('./model_checkpoints/' + model.model_folder)) or (is_debbug == False) :
+                    pass
+                else:
+
+                    predictions = []
+                    train_predictions = []
                     
-                    stacked_tensors = torch.stack(predictions)
-                    ensembled_predictions = torch.mean(stacked_tensors, dim = 0)
+                    for model in best_models:
 
-                    stacked_tensors_train = torch.stack(train_predictions)
-                    ensembled_predictions_train = torch.mean(stacked_tensors_train, dim = 0)
-                
-                accuracy = accuracy_score(y_true = torch.argmax(test_dataset.labels, dim = 1).cpu(), y_pred = torch.argmax(ensembled_predictions, dim = 1).cpu())
-                train_accuracy = accuracy_score(y_true = torch.argmax(train_dataset.labels, dim = 1).cpu(), y_pred = torch.argmax(ensembled_predictions_train, dim = 1).cpu())
+                        with torch.inference_mode():   
+                            logits = model(test_dataset.data.type(torch.float32))
+                            predictions.append(activation_function(logits))
 
-                
-                history = {
-                    'train_loss' : [0], 
-                    'test_loss': [0], 
-                    'train_accuracy': [train_accuracy], 
-                    'test_accuracy': [accuracy], 
-                    'epochs': [9999]
+                            train_logits = model(train_dataset.data.type(torch.float32))
+                            train_predictions.append(activation_function(train_logits))
+                        
+                        stacked_tensors = torch.stack(predictions)
+                        ensembled_predictions = torch.mean(stacked_tensors, dim = 0)
 
-                }
-
-                metrics = {
-                    'history': history,
-                    'traning_time': 99999
-                }
-
-                with open('./model_checkpoints/' + model.model_folder.split('/')[0] + '/metrics.pkl', 'wb') as f:  # open a text file
-                    pickle.dump(metrics, f)
+                        stacked_tensors_train = torch.stack(train_predictions)
+                        ensembled_predictions_train = torch.mean(stacked_tensors_train, dim = 0)
+                    
+                    accuracy = accuracy_score(y_true = torch.argmax(test_dataset.labels, dim = 1).cpu(), y_pred = torch.argmax(ensembled_predictions, dim = 1).cpu())
+                    train_accuracy = accuracy_score(y_true = torch.argmax(train_dataset.labels, dim = 1).cpu(), y_pred = torch.argmax(ensembled_predictions_train, dim = 1).cpu())
 
                     
-                print('asdadasdd')
+                    history = {
+                        'train_loss' : [0], 
+                        'test_loss': [0], 
+                        'train_accuracy': [train_accuracy], 
+                        'test_accuracy': [accuracy], 
+                        'epochs': [9999]
+
+                    }
+
+                    metrics = {
+                        'history': history,
+                        'traning_time': 99999
+                    }
+
+                    with open('./model_checkpoints/' + model.model_folder.split('/')[0] + '/metrics.pkl', 'wb') as f:  # open a text file
+                        pickle.dump(metrics, f)
+                
+                model_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+                if 'params_info.csv' in os.listdir('.'):
+                    params_info = pd.read_csv('params_info.csv')
+
+                    if params_info.loc[(params_info.model_name == model.model_name) & (params_info.dataset_name == model.metadata['problemname'])].shape[0] != 0:
+                        pass
+                    else:
+                        params_info_new = pd.DataFrame({
+                            'model_name': [model.model_name],
+                            'dataset_name': [model.metadata['problemname']],
+                            'model_params': model_params
+                        })
+
+                        pd.concat([params_info, params_info_new], axis = 0).to_csv('params_info.csv', index=False)
+
+
+                else:
+                    params_info = pd.DataFrame({
+                        'model_name': [model.model_name],
+                        'dataset_name': [model.metadata['problemname']],
+                        'model_params': model_params
+                    })
+
+                    params_info.to_csv('params_info.csv', index=False)
                     
 
 
