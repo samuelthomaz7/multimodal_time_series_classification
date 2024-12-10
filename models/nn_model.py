@@ -140,9 +140,14 @@ class NNModel(nn.Module):
 
                 outputs = self.forward(inputs)
                 
+                # loss = self.loss_fn(
+                #     outputs.type(torch.float32), 
+                #     targets.type(torch.float32) if outputs.type(torch.float32).shape[1] == 2 else targets.argmax(dim = -1).unsqueeze(dim = -1).type(torch.float32)
+                # )
+
                 loss = self.loss_fn(
                     outputs.type(torch.float32), 
-                    targets.type(torch.float32) if outputs.type(torch.float32).shape[1] == 2 else targets.argmax(dim = -1).unsqueeze(dim = -1).type(torch.float32)
+                    targets.type(torch.float32) 
                 )
 
                 # if not self.is_ensemble:
@@ -178,9 +183,14 @@ class NNModel(nn.Module):
                 # else:
                 #     loss = self.loss_fn(outputs.type(torch.float32), targets.type(torch.float32).argmax(dim = 1))
 
+                    # loss = self.loss_fn(
+                    #     outputs.type(torch.float32), 
+                    #     targets.type(torch.float32) if outputs.type(torch.float32).shape[1] == 2 else targets.argmax(dim = -1).unsqueeze(dim = -1).type(torch.float32)
+                    # )
+
                     loss = self.loss_fn(
                         outputs.type(torch.float32), 
-                        targets.type(torch.float32) if outputs.type(torch.float32).shape[1] == 2 else targets.argmax(dim = -1).unsqueeze(dim = -1).type(torch.float32)
+                        targets.type(torch.float32) 
                     )
 
                     valid_loss += loss.item()
