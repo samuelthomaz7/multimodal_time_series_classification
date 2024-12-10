@@ -111,7 +111,7 @@ def training_nn_for_seeds(used_model, device = 'cuda', datasets = [], seeds = []
 
             
             else:
-                activation_function = nn.Softmax(dim = 1) if train_dataset.labels.shape[1] != 2 else nn.Sigmoid(dim = 1)
+                activation_function = nn.Softmax(dim = 1) if train_dataset.labels.shape[1] != 2 else nn.Sigmoid()
                 best_models = []
                 
                 for model_num in range(1, num_ensembles+1):

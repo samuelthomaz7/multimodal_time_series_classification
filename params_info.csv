@@ -65,3 +65,10 @@ LITE,articularywordrecognition,28461
 LITE,basicmotions,21048
 LITE,cricket,21312
 LITE,natops,61434
+InceptionTime,atrialfibrillation,633347
+InceptionTime,standwalkjump,633475
+InceptionTime,racketsports,633732
+InceptionTime,articularywordrecognition,636633
+InceptionTime,basicmotions,633732
+InceptionTime,cricket,634764
+InceptionTime,natops,635142
