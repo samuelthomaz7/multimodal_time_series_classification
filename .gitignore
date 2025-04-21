@@ -120,7 +120,7 @@ output.txt
 *.out
 out_inc.txt
 *.png
-
+test_notebook.ipynb
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
