@@ -1,5 +1,4 @@
 # Multi Modal Time Series Classification
-This repository contains the code for my master's thesis.
 
 **Abstract**
 
